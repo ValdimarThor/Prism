@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved. See License.txt in the project root for license information.
+
 
 using System;
 using System.ComponentModel;
@@ -94,6 +94,11 @@ namespace Prism.Wpf.Tests.Mocks
         public void RequestNavigate(System.Uri target, System.Action<NavigationResult> navigationCallback, NavigationParameters navigationParameters)
         {
             throw new System.NotImplementedException();
+        }
+
+        public void RemoveAll()
+        {
+            throw new NotImplementedException();
         }
 
         public IRegionNavigationService NavigationService

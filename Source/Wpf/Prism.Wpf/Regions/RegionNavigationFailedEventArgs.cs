@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved. See License.txt in the project root for license information.
+
 
 using System;
 
@@ -16,9 +16,7 @@ namespace Prism.Regions
         public RegionNavigationFailedEventArgs(NavigationContext navigationContext)
         {
             if (navigationContext == null)
-            {
-                throw new ArgumentNullException("navigationContext");
-            }
+                throw new ArgumentNullException(nameof(navigationContext));
 
             this.NavigationContext = navigationContext;
         }

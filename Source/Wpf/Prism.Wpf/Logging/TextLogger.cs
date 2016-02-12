@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved. See License.txt in the project root for license information.
+
 
 using Prism.Properties;
 using System;
@@ -30,7 +30,7 @@ namespace Prism.Logging
         public TextLogger(TextWriter writer)
         {
             if (writer == null)
-                throw new ArgumentNullException("writer");
+                throw new ArgumentNullException(nameof(writer));
 
             this.writer = writer;
         }

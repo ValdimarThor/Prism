@@ -1,5 +1,8 @@
-// Copyright (c) Microsoft Corporation. All rights reserved. See License.txt in the project root for license information.
-
+using Microsoft.Practices.ServiceLocation;
+using Prism.Common;
+using Prism.Events;
+using Prism.Properties;
+using Prism.Regions.Behaviors;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,17 +11,13 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Windows;
-using Prism.Events;
-using Prism.Properties;
-using Prism.Regions.Behaviors;
-using Microsoft.Practices.ServiceLocation;
-using Prism.Common;
 
 namespace Prism.Regions
 {
     /// <summary>
-    /// This class is responsible for maintaining a collection of regions and attaching regions to controls. 
+    /// This class is responsible for maintaining a collection of regions and attaching regions to controls.
     /// </summary>
     /// <remarks>
     /// This class supplies the attached properties that can be used for simple region creation from XAML.
@@ -53,7 +52,9 @@ namespace Prism.Regions
         /// <param name="regionName">The name of the region to register.</param>
         public static void SetRegionName(DependencyObject regionTarget, string regionName)
         {
-            if (regionTarget == null) throw new ArgumentNullException("regionTarget");
+            if (regionTarget == null)
+                throw new ArgumentNullException(nameof(regionTarget));
+
             regionTarget.SetValue(RegionNameProperty, regionName);
         }
 
@@ -61,11 +62,13 @@ namespace Prism.Regions
         /// Gets the value for the <see cref="RegionNameProperty"/> attached property.
         /// </summary>
         /// <param name="regionTarget">The object to adapt. This is typically a container (i.e a control).</param>
-        /// <returns>The name of the region that should be created when 
+        /// <returns>The name of the region that should be created when
         /// <see cref="RegionManagerProperty"/> is also set in this element.</returns>
         public static string GetRegionName(DependencyObject regionTarget)
         {
-            if (regionTarget == null) throw new ArgumentNullException("regionTarget");
+            if (regionTarget == null)
+                throw new ArgumentNullException(nameof(regionTarget));
+
             return regionTarget.GetValue(RegionNameProperty) as string;
         }
 
@@ -75,17 +78,17 @@ namespace Prism.Regions
 
         /// <summary>
         /// Returns an <see cref="ObservableObject{T}"/> wrapper that can hold an <see cref="IRegion"/>. Using this wrapper
-        /// you can detect when an <see cref="IRegion"/> has been created by the <see cref="RegionAdapterBase{T}"/>. 
-        /// 
+        /// you can detect when an <see cref="IRegion"/> has been created by the <see cref="RegionAdapterBase{T}"/>.
+        ///
         /// If the <see cref="ObservableObject{T}"/> wrapper does not yet exist, a new wrapper will be created. When the region
-        /// gets created and assigned to the wrapper, you can use the <see cref="ObservableObject{T}.PropertyChanged"/> event 
-        /// to get notified of that change. 
+        /// gets created and assigned to the wrapper, you can use the <see cref="ObservableObject{T}.PropertyChanged"/> event
+        /// to get notified of that change.
         /// </summary>
         /// <param name="view">The view that will host the region. </param>
         /// <returns>Wrapper that can hold an <see cref="IRegion"/> value and can notify when the <see cref="IRegion"/> value changes. </returns>
         public static ObservableObject<IRegion> GetObservableRegion(DependencyObject view)
         {
-            if (view == null) throw new ArgumentNullException("view");
+            if (view == null) throw new ArgumentNullException(nameof(view));
 
             ObservableObject<IRegion> regionWrapper = view.GetValue(ObservableRegionProperty) as ObservableObject<IRegion>;
 
@@ -135,7 +138,9 @@ namespace Prism.Regions
         /// <returns>The <see cref="IRegionManager"/> attached to the <paramref name="target"/> element.</returns>
         public static IRegionManager GetRegionManager(DependencyObject target)
         {
-            if (target == null) throw new ArgumentNullException("target");
+            if (target == null)
+                throw new ArgumentNullException(nameof(target));
+
             return (IRegionManager)target.GetValue(RegionManagerProperty);
         }
 
@@ -146,7 +151,9 @@ namespace Prism.Regions
         /// <param name="value">The value.</param>
         public static void SetRegionManager(DependencyObject target, IRegionManager value)
         {
-            if (target == null) throw new ArgumentNullException("target");
+            if (target == null)
+                throw new ArgumentNullException(nameof(target));
+
             target.SetValue(RegionManagerProperty, value);
         }
 
@@ -171,7 +178,9 @@ namespace Prism.Regions
         /// <returns>The region context to pass to the contained views.</returns>
         public static object GetRegionContext(DependencyObject target)
         {
-            if (target == null) throw new ArgumentNullException("target");
+            if (target == null)
+                throw new ArgumentNullException(nameof(target));
+
             return target.GetValue(RegionContextProperty);
         }
 
@@ -182,7 +191,9 @@ namespace Prism.Regions
         /// <param name="value">The value.</param>
         public static void SetRegionContext(DependencyObject target, object value)
         {
-            if (target == null) throw new ArgumentNullException("target");
+            if (target == null)
+                throw new ArgumentNullException(nameof(target));
+
             target.SetValue(RegionContextProperty, value);
         }
 
@@ -198,7 +209,7 @@ namespace Prism.Regions
         }
 
         /// <summary>
-        /// Notifies attached behaviors to update the region managers appropriatelly if needed to. 
+        /// Notifies attached behaviors to update the region managers appropriatelly if needed to.
         /// </summary>
         /// <remarks>
         /// This method is normally called internally, and there is usually no need to call this from user code.
@@ -254,6 +265,157 @@ namespace Prism.Regions
             return new RegionManager();
         }
 
+        /// <summary>
+        ///     Add a view to the Views collection of a Region. Note that the region must already exist in this regionmanager.
+        /// </summary>
+        /// <param name="regionName">The name of the region to add a view to</param>
+        /// <param name="view">The view to add to the views collection</param>
+        /// <returns>The RegionManager, to easily add several views. </returns>
+        public IRegionManager AddToRegion(string regionName, object view)
+        {
+            if (!Regions.ContainsRegionWithName(regionName))
+                throw new ArgumentException(string.Format(Thread.CurrentThread.CurrentCulture, Resources.RegionNotFound, regionName), nameof(regionName));
+
+            return Regions[regionName].Add(view);
+        }
+
+        /// <summary>
+        /// Associate a view with a region, by registering a type. When the region get's displayed
+        /// this type will be resolved using the ServiceLocator into a concrete instance. The instance
+        /// will be added to the Views collection of the region
+        /// </summary>
+        /// <param name="regionName">The name of the region to associate the view with.</param>
+        /// <param name="viewType">The type of the view to register with the </param>
+        /// <returns>The regionmanager, for adding several views easily</returns>
+        public IRegionManager RegisterViewWithRegion(string regionName, Type viewType)
+        {
+            var regionViewRegistry = ServiceLocator.Current.GetInstance<IRegionViewRegistry>();
+
+            regionViewRegistry.RegisterViewWithRegion(regionName, viewType);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Associate a view with a region, using a delegate to resolve a concreate instance of the view.
+        /// When the region get's displayed, this delelgate will be called and the result will be added to the
+        /// views collection of the region.
+        /// </summary>
+        /// <param name="regionName">The name of the region to associate the view with.</param>
+        /// <param name="getContentDelegate">The delegate used to resolve a concreate instance of the view.</param>
+        /// <returns>The regionmanager, for adding several views easily</returns>
+        public IRegionManager RegisterViewWithRegion(string regionName, Func<object> getContentDelegate)
+        {
+            var regionViewRegistry = ServiceLocator.Current.GetInstance<IRegionViewRegistry>();
+
+            regionViewRegistry.RegisterViewWithRegion(regionName, getContentDelegate);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Navigates the specified region manager.
+        /// </summary>
+        /// <param name="regionName">The name of the region to call Navigate on.</param>
+        /// <param name="source">The URI of the content to display.</param>
+        /// <param name="navigationCallback">The navigation callback.</param>
+        public void RequestNavigate(string regionName, Uri source, Action<NavigationResult> navigationCallback)
+        {
+            if (navigationCallback == null) throw new ArgumentNullException(nameof(navigationCallback));
+
+            if (Regions.ContainsRegionWithName(regionName))
+            {
+                Regions[regionName].RequestNavigate(source, navigationCallback);
+            }
+            else
+            {
+                navigationCallback(new NavigationResult(new NavigationContext(null, source), false));
+            }
+        }
+
+        /// <summary>
+        /// Navigates the specified region manager.
+        /// </summary>
+        /// <param name="regionName">The name of the region to call Navigate on.</param>
+        /// <param name="source">The URI of the content to display.</param>
+        public void RequestNavigate(string regionName, Uri source)
+        {
+            RequestNavigate(regionName, source, nr => { });
+        }
+
+        /// <summary>
+        /// Navigates the specified region manager.
+        /// </summary>
+        /// <param name="regionName">The name of the region to call Navigate on.</param>
+        /// <param name="source">The URI of the content to display.</param>
+        /// <param name="navigationCallback">The navigation callback.</param>
+        public void RequestNavigate(string regionName, string source, Action<NavigationResult> navigationCallback)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+
+            RequestNavigate(regionName, new Uri(source, UriKind.RelativeOrAbsolute), navigationCallback);
+        }
+
+        /// <summary>
+        /// Navigates the specified region manager.
+        /// </summary>
+        /// <param name="regionName">The name of the region to call Navigate on.</param>
+        /// <param name="source">The URI of the content to display.</param>
+        public void RequestNavigate(string regionName, string source)
+        {
+            RequestNavigate(regionName, source, nr => { });
+        }
+
+        /// <summary>
+        /// This method allows an IRegionManager to locate a specified region and navigate in it to the specified target Uri, passing a navigation callback and an instance of NavigationParameters, which holds a collection of object parameters.
+        /// </summary>
+        /// <param name="regionName">The name of the region where the navigation will occur.</param>
+        /// <param name="target">A Uri that represents the target where the region will navigate.</param>
+        /// <param name="navigationCallback">The navigation callback that will be executed after the navigation is completed.</param>
+        /// <param name="navigationParameters">An instance of NavigationParameters, which holds a collection of object parameters.</param>
+        public void RequestNavigate(string regionName, Uri target, Action<NavigationResult> navigationCallback, NavigationParameters navigationParameters)
+        {
+            if (Regions.ContainsRegionWithName(regionName))
+            {
+                Regions[regionName].RequestNavigate(target, navigationCallback, navigationParameters);
+            }
+        }
+
+        /// <summary>
+        /// This method allows an IRegionManager to locate a specified region and navigate in it to the specified target string, passing a navigation callback and an instance of NavigationParameters, which holds a collection of object parameters.
+        /// </summary>
+        /// <param name="regionName">The name of the region where the navigation will occur.</param>
+        /// <param name="target">A string that represents the target where the region will navigate.</param>
+        /// <param name="navigationCallback">The navigation callback that will be executed after the navigation is completed.</param>
+        /// <param name="navigationParameters">An instance of NavigationParameters, which holds a collection of object parameters.</param>
+        public void RequestNavigate(string regionName, string target, Action<NavigationResult> navigationCallback, NavigationParameters navigationParameters)
+        {
+            RequestNavigate(regionName, new Uri(target, UriKind.RelativeOrAbsolute), navigationCallback, navigationParameters);
+        }
+
+        /// <summary>
+        /// This method allows an IRegionManager to locate a specified region and navigate in it to the specified target Uri, passing an instance of NavigationParameters, which holds a collection of object parameters.
+        /// </summary>
+        /// <param name="regionName">The name of the region where the navigation will occur.</param>
+        /// <param name="target">A Uri that represents the target where the region will navigate.</param>
+        /// <param name="navigationParameters">An instance of NavigationParameters, which holds a collection of object parameters.</param>
+        public void RequestNavigate(string regionName, Uri target, NavigationParameters navigationParameters)
+        {
+            RequestNavigate(regionName, target, nr => { }, navigationParameters);
+        }
+
+        /// <summary>
+        /// This method allows an IRegionManager to locate a specified region and navigate in it to the specified target string, passing an instance of NavigationParameters, which holds a collection of object parameters.
+        /// </summary>
+        /// <param name="regionName">The name of the region where the navigation will occur.</param>
+        /// <param name="target">A string that represents the target where the region will navigate.</param>
+        /// <param name="navigationParameters">An instance of NavigationParameters, which holds a collection of object parameters.</param>
+        public void RequestNavigate(string regionName, string target, NavigationParameters navigationParameters)
+        {
+            RequestNavigate(regionName, new Uri(target, UriKind.RelativeOrAbsolute), nr => { }, navigationParameters);
+        }
+
         private class RegionCollection : IRegionCollection
         {
             private readonly IRegionManager regionManager;
@@ -297,7 +459,9 @@ namespace Prism.Regions
 
             public void Add(IRegion region)
             {
-                if (region == null) throw new ArgumentNullException("region");
+                if (region == null)
+                    throw new ArgumentNullException(nameof(region));
+
                 UpdateRegions();
 
                 if (region.Name == null)
@@ -341,6 +505,27 @@ namespace Prism.Regions
                 UpdateRegions();
 
                 return GetRegionByName(regionName) != null;
+            }
+
+            /// <summary>
+            /// Adds a region to the regionmanager with the name received as argument.
+            /// </summary>
+            /// <param name="regionName">The name to be given to the region.</param>
+            /// <param name="region">The region to be added to the regionmanager.</param>
+            /// <exception cref="ArgumentNullException">Thrown if <paramref name="region"/> is <see langword="null"/>.</exception>
+            /// <exception cref="ArgumentException">Thrown if <paramref name="regionName"/> and <paramref name="region"/>'s name do not match and the <paramref name="region"/> <see cref="IRegion.Name"/> is not <see langword="null"/>.</exception>
+            public void Add(string regionName, IRegion region)
+            {
+                if (region == null)
+                    throw new ArgumentNullException(nameof(region));
+
+                if (region.Name != null && region.Name != regionName)
+                    throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.RegionManagerWithDifferentNameException, region.Name, regionName), nameof(regionName));
+
+                if (region.Name == null)
+                    region.Name = regionName;
+
+                Add(region);
             }
 
             private IRegion GetRegionByName(string regionName)

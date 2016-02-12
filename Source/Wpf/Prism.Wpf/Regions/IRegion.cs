@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved. See License.txt in the project root for license information.
+
 
 using System;
 using System.ComponentModel;
@@ -71,6 +71,11 @@ namespace Prism.Regions
         /// </summary>
         /// <param name="view">The view to remove.</param>
         void Remove(object view);
+
+        /// <summary>
+        /// Removes all views from the region.
+        /// </summary>
+        void RemoveAll();
 
         /// <summary>
         /// Marks the specified view as active. 

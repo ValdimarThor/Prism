@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved. See License.txt in the project root for license information.
+
 
 using System.Collections.Generic;
 
@@ -20,7 +20,7 @@ namespace System
         /// <param name="frameworkExceptionType">The type of exception to register.</param>
         public static void RegisterFrameworkExceptionType(Type frameworkExceptionType)
         {
-            if (frameworkExceptionType == null) throw new ArgumentNullException("frameworkExceptionType");
+            if (frameworkExceptionType == null) throw new ArgumentNullException(nameof(frameworkExceptionType));
 
             if (!frameworkExceptionTypes.Contains(frameworkExceptionType))
                 frameworkExceptionTypes.Add(frameworkExceptionType);

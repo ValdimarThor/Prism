@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved. See License.txt in the project root for license information.
+
 
 using System;
 using System.Windows;
@@ -22,11 +22,13 @@ namespace Prism.Regions
         /// Gets the value for the RegionName attached property.
         /// </summary>
         /// <param name="element">The object to adapt. This is typically a container (i.e a control).</param>
-        /// <returns>The name of the region that should be created when 
+        /// <returns>The name of the region that should be created when
         /// the RegionManager is also set in this element.</returns>
         public string GetRegionName(DependencyObject element)
         {
-            if (element == null) throw new ArgumentNullException("element");
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
             return element.GetValue(RegionManager.RegionNameProperty) as string;
         }
 
@@ -37,7 +39,9 @@ namespace Prism.Regions
         /// <returns>The <see cref="IRegionManager"/> attached to the <paramref name="element"/> element.</returns>
         public IRegionManager GetRegionManager(DependencyObject element)
         {
-            if (element == null) throw new ArgumentNullException("element");
+            if (element == null)
+                throw new ArgumentNullException(nameof(element));
+
             return element.GetValue(RegionManager.RegionManagerProperty) as IRegionManager;
         }
     }

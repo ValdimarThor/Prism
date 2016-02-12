@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved. See License.txt in the project root for license information.
+
 
 using System;
 
@@ -18,7 +18,7 @@ namespace Prism.Modularity
         {
             if (moduleInfo == null)
             {
-                throw new ArgumentNullException("moduleInfo");
+                throw new ArgumentNullException(nameof(moduleInfo));
             }
 
             this.ModuleInfo = moduleInfo;

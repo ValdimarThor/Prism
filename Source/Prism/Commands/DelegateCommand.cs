@@ -1,5 +1,3 @@
-// Copyright (c) Microsoft Corporation. All rights reserved. See License.txt in the project root for license information.
-
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -55,7 +53,7 @@ namespace Prism.Commands
             : base((o) => executeMethod((T)o), (o) => canExecuteMethod((T)o))
         {
             if (executeMethod == null || canExecuteMethod == null)
-                throw new ArgumentNullException("executeMethod", Resources.DelegateCommandDelegatesCannotBeNull);
+                throw new ArgumentNullException(nameof(executeMethod), Resources.DelegateCommandDelegatesCannotBeNull);
 
             TypeInfo genericTypeInfo = typeof(T).GetTypeInfo();
 
@@ -131,22 +129,22 @@ namespace Prism.Commands
         ///Executes the command and invokes the <see cref="Action{T}"/> provided during construction.
         ///</summary>
         ///<param name="parameter">Data used by the command.</param>
-        public virtual async Task Execute(T parameter)
+        public virtual Task Execute(T parameter)
         {
-            await base.Execute(parameter);
+            return base.Execute(parameter);
         }
 
 
-        private DelegateCommand(Func<T, Task> executeMethod)
+        protected DelegateCommand(Func<T, Task> executeMethod)
             : this(executeMethod, (o) => true)
         {
         }
 
-        private DelegateCommand(Func<T, Task> executeMethod, Func<T, bool> canExecuteMethod)
+        protected DelegateCommand(Func<T, Task> executeMethod, Func<T, bool> canExecuteMethod)
             : base((o) => executeMethod((T)o), (o) => canExecuteMethod((T)o))
         {
             if (executeMethod == null || canExecuteMethod == null)
-                throw new ArgumentNullException("executeMethod", Resources.DelegateCommandDelegatesCannotBeNull);
+                throw new ArgumentNullException(nameof(executeMethod), Resources.DelegateCommandDelegatesCannotBeNull);
         }
 
     }
@@ -177,7 +175,7 @@ namespace Prism.Commands
             : base((o) => executeMethod(), (o) => canExecuteMethod())
         {
             if (executeMethod == null || canExecuteMethod == null)
-                throw new ArgumentNullException("executeMethod", Resources.DelegateCommandDelegatesCannotBeNull);
+                throw new ArgumentNullException(nameof(executeMethod), Resources.DelegateCommandDelegatesCannotBeNull);
         }
 
         /// <summary>
@@ -227,9 +225,9 @@ namespace Prism.Commands
         ///<summary>
         /// Executes the command.
         ///</summary>
-        public virtual async Task Execute()
+        public virtual Task Execute()
         {
-            await Execute(null);
+            return Execute(null);
         }
 
         /// <summary>
@@ -241,16 +239,16 @@ namespace Prism.Commands
             return CanExecute(null);
         }
 
-        private DelegateCommand(Func<Task> executeMethod)
+        protected DelegateCommand(Func<Task> executeMethod)
             : this(executeMethod, () => true)
         {
         }
 
-        private DelegateCommand(Func<Task> executeMethod, Func<bool> canExecuteMethod)
+        protected DelegateCommand(Func<Task> executeMethod, Func<bool> canExecuteMethod)
             : base((o) => executeMethod(), (o) => canExecuteMethod())
         {
             if (executeMethod == null || canExecuteMethod == null)
-                throw new ArgumentNullException("executeMethod", Resources.DelegateCommandDelegatesCannotBeNull);
+                throw new ArgumentNullException(nameof(executeMethod), Resources.DelegateCommandDelegatesCannotBeNull);
         }
     }
 
